@@ -31,7 +31,58 @@ This demo shows how to support multiple `settings.gradle` files for multiple pro
 
 See [settings.gradle](./settings.gradle).
 
+Just send mock Setting object to the sub `settings.gradle` scripts.
+
+````
+def includeProject(String path, Closure closure) {
+    ...
+    apply {
+        from settingsFile
+        to new SettingsProxy(...)
+    }
+}
+
+class SettingsProxy {
+    ...
+    
+    public getRootProject() {
+        ...
+    }
+
+    public void include(String... paths) {
+        ...
+    }
+
+    public project(String path) {
+        ...
+    }
+
+    private String generateDescendantPath(path) {
+        ...
+    }
+}
+````
 
 ## How to substitute dependencies?
 
 See [build.gradle](./build.gradle).
+
+````
+subprojects {
+    final substitutionRules = rootProject.ext.substitutionRules
+    configurations.all { configuration ->
+        resolutionStrategy.dependencySubstitution.all { DependencySubstitution substitution ->
+            final ComponentSelector requested = substitution.requested
+            if (requested instanceof ModuleComponentSelector) {
+                final Project target = substitutionRules.find(requested.group, requested.module)
+                if (target) {
+                    println "Substitute: $project.name:$configuration.name '$requested' -> $target"
+
+                    project.evaluationDependsOn("$target.path")
+                    substitution.useTarget(target)
+                }
+            }
+        }
+    }
+}
+````
