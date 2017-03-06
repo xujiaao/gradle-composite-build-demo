@@ -26,6 +26,12 @@ This demo shows how to support multiple `settings.gradle` files for multiple pro
 └── settings.gradle
 ````
 
-## How dose multiple `settings.gradle` work?
 
-See [./settings.gradle](./settings.gradle).
+## How dose multiple settings.gradle work?
+
+See [settings.gradle](./settings.gradle).
+
+
+## How to substitute dependencies?
+
+See [build.gradle](./build.gradle).
