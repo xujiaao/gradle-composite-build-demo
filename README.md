@@ -31,7 +31,7 @@ This demo shows how to support multiple `settings.gradle` files for multiple pro
 
 See [settings.gradle](./settings.gradle).
 
-Just mocks the Setting object, and sends it to the sub `settings.gradle` scripts.
+Just apply the sub `settings.gradle` scripts to mock settings instance.
 
 ````
 def includeProject(String path, Closure closure) {
