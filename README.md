@@ -31,7 +31,7 @@ This demo shows how to support multiple `settings.gradle` files for multiple pro
 
 See [settings.gradle](./settings.gradle).
 
-Just send mock Setting object to the sub `settings.gradle` scripts.
+Just mocks the Setting object, and sends it to the sub `settings.gradle` scripts.
 
 ````
 def includeProject(String path, Closure closure) {
@@ -61,8 +61,11 @@ class SettingsProxy {
 See [build.gradle](./build.gradle).
 
 ````
+...
+
 subprojects {
-    final substitutionRules = rootProject.ext.substitutionRules
+    ...
+    
     configurations.all { configuration ->
         resolutionStrategy.dependencySubstitution.all { DependencySubstitution substitution ->
             final ComponentSelector requested = substitution.requested
