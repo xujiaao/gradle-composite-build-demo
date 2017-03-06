@@ -1,0 +1,73 @@
+import java.text.SimpleDateFormat
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
+    }
+}
+
+repositories {
+    mavenLocal()
+
+    jcenter()
+}
+
+apply plugin: 'com.android.application'
+
+// -------------------------------------------------------------------------------------------------
+// Android
+// -------------------------------------------------------------------------------------------------
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion '25.0.2'
+
+    //noinspection GroovyMissingReturnStatement
+    defaultConfig {
+        applicationId 'com.xujiaao.gradle.composite.demo'
+        versionCode 1
+        versionName "1.0.${new SimpleDateFormat("yyMMddHHmm").format(new Date())}"
+
+        minSdkVersion 14
+        targetSdkVersion 25
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Dependencies
+// -------------------------------------------------------------------------------------------------
+
+dependencies {
+
+    /**
+     * Jars.
+     */
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+
+    /**
+     * Support Libraries.
+     */
+    compile 'com.android.support:appcompat-v7:25.1.0'
+
+    /**
+     * Libraries.
+     */
+    compile 'com.xujiaao.gradle.composite:lib1:1.0.0'
+    compile 'com.xujiaao.gradle.composite:lib2:1.0.0'
+}

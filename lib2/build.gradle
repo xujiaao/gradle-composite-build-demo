@@ -1,0 +1,30 @@
+@SuppressWarnings("GroovyUnusedDeclaration")
+def wrapProject(String path) {
+    return project == rootProject ? project(path) : project("$project.path$path")
+}
+
+// -------------------------------------------------------------------------------------------------
+// Scripts for Standalone Mode
+// -------------------------------------------------------------------------------------------------
+
+buildscript {
+    apply from: file('dependencies.gradle')
+}
+
+subprojects {
+    buildscript {
+        repositories {
+            jcenter()
+        }
+    }
+
+    repositories {
+        mavenLocal()
+
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete buildDir
+}

@@ -1,0 +1,136 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+@SuppressWarnings("GroovyUnusedDeclaration")
+def isAndroidProject(Project project) {
+    return project.pluginManager.hasPlugin('com.android.application') ||
+            project.pluginManager.hasPlugin('com.android.library')
+}
+
+@SuppressWarnings("GroovyUnusedDeclaration")
+def isReleaseBuild() {
+    return !version.contains("SNAPSHOT")
+}
+
+@SuppressWarnings("GroovyUnusedDeclaration")
+def findPropertyQuietly(String name) {
+    return hasProperty(name) ? property(name) : '';
+}
+
+@SuppressWarnings("GroovyUnusedDeclaration")
+def inflateMavenPom(MavenPom pom) {
+    def temp;
+
+    if ((temp = findPropertyQuietly('POM_ARTIFACT_ID'))) {
+        pom.artifactId = temp;
+    }
+
+    pom.project {
+        if ((temp = findPropertyQuietly('POM_NAME'))) {
+            name temp;
+        }
+
+        if ((temp = findPropertyQuietly('POM_PACKAGING'))) {
+            packaging temp;
+        }
+
+        if ((temp = findPropertyQuietly('POM_DESCRIPTION'))) {
+            description temp;
+        }
+    }
+}
+
+afterEvaluate { project ->
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                def username = findPropertyQuietly('NEXUS_USERNAME');
+                def password = findPropertyQuietly('NEXUS_PASSWORD');
+
+                repository(url: REPOSITORY_URL_RELEASE) {
+                    authentication(userName: username, password: password)
+                }
+
+                snapshotRepository(url: REPOSITORY_URL_SNAPSHOT) {
+                    authentication(userName: username, password: password)
+                }
+
+                inflateMavenPom(pom)
+            }
+        }
+    }
+
+    signing {
+        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
+        sign configurations.archives
+    }
+
+    if (isAndroidProject(project)) {
+        task install(type: Upload, dependsOn: assemble) {
+            repositories.mavenInstaller {
+                configuration = configurations.archives
+
+                inflateMavenPom(pom)
+            }
+        }
+
+        task androidSourcesJar(type: Jar) {
+            classifier = 'sources'
+            from android.sourceSets.main.java.sourceFiles
+        }
+
+        task androidJavadocs(type: Javadoc) {
+            source = android.sourceSets.main.java.srcDirs
+            classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+        }
+
+        androidJavadocs.doFirst {
+            classpath += fileTree(dir: "$buildDir/intermediates/exploded-aar/", include: "**/classes.jar")
+        }
+
+        task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+            classifier = 'javadoc'
+            from androidJavadocs.destinationDir
+        }
+
+        gradle.taskGraph.whenReady { taskGraph ->
+            if (taskGraph.hasTask(":$name:uploadArchives") || taskGraph.hasTask(":$name:install")) {
+                artifacts {
+                    archives androidSourcesJar
+                    archives androidJavadocsJar
+                }
+            }
+        }
+    } else {
+        install {
+            repositories.mavenInstaller {
+                inflateMavenPom(pom)
+            }
+        }
+
+        task sourcesJar(type: Jar, dependsOn: classes) {
+            classifier = 'sources'
+            from sourceSets.main.allSource
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            classifier = 'javadoc'
+            from javadoc.getDestinationDir()
+        }
+
+        artifacts {
+            archives sourcesJar
+            archives javadocJar
+        }
+    }
+
+    if (JavaVersion.current().isJava8Compatible()) {
+        allprojects {
+            tasks.withType(Javadoc) {
+                options.addStringOption('Xdoclint:none', '-quiet')
+            }
+        }
+    }
+}

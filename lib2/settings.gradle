@@ -1,0 +1,4 @@
+rootProject.name = 'lib2-root'
+
+include ':lib2',
+        ':lib2-sample'

@@ -1,0 +1,24 @@
+def supportLibrariesVersion = '25.1.0'
+
+ext {
+    androidCompileSdkVersion = 25
+    androidBuildToolsVersion = '25.0.2'
+
+    androidMinSdkVersion = 14
+    androidTargetSdkVersion = 25
+
+    androidSourceCompatibilityVersion = JavaVersion.VERSION_1_7
+    androidTargetCompatibilityVersion = JavaVersion.VERSION_1_7
+
+    dep = [
+            /**
+             * Plugins.
+             */
+            androidPlugin: 'com.android.tools.build:gradle:2.2.3',
+
+            /**
+             * Support Libraries.
+             */
+            appcompatV7  : "com.android.support:appcompat-v7:$supportLibrariesVersion",
+    ]
+}

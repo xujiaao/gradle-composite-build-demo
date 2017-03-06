@@ -1,0 +1,119 @@
+binding.workspace = file('./')
+
+// -------------------------------------------------------------------------------------------------
+// Include Projects
+// -------------------------------------------------------------------------------------------------
+
+include(':app')
+
+includeProject(':lib1')
+includeProject(':lib2') {
+    exclude { path -> path.contains('-sample') }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Tools (Projects)
+// -------------------------------------------------------------------------------------------------
+
+@SuppressWarnings("GroovyUnusedDeclaration")
+def includeProject(String[] paths) {
+    for (String path : paths) {
+        includeProject(path, null)
+    }
+}
+
+def includeProject(String path, Closure closure) {
+    def ProjectSpec projectSpec = new ProjectSpec()
+    if (closure) {
+        closure.delegate = projectSpec
+        closure.resolveStrategy = Closure.DELEGATE_FIRST
+        closure()
+    }
+
+    def projectDir = new File(binding.workspace, path.replace(':', '/'))
+    if (projectDir.exists()) {
+        include(path)
+
+        def project = project(path)
+        project.projectDir = projectDir
+
+        def settingsFile = new File(projectDir, 'settings.gradle')
+        if (settingsFile.exists()) {
+            apply {
+                from settingsFile
+                to new SettingsProxy(settings, project, projectSpec)
+            }
+        }
+    }
+}
+
+class ProjectSpec {
+    private final Set<String> mExcludes = []
+
+    private Spec<String> mFilter
+
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    public void exclude(String[] paths) {
+        mExcludes.addAll(paths)
+    }
+
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    public void exclude(Spec<String> filter) {
+        mFilter = filter
+    }
+
+    boolean accept(String path) {
+        if (mExcludes.contains(path)) {
+            return false
+        }
+
+        if (mFilter && mFilter.isSatisfiedBy(path)) {
+            return false
+        }
+
+        return true
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Tools (Settings)
+// -------------------------------------------------------------------------------------------------
+
+class SettingsProxy {
+    private final mSettings
+    private final mProject
+    private final mProjectSpec
+
+    SettingsProxy(settings, project, projectSpec) {
+        mSettings = settings
+        mProject = project
+        mProjectSpec = projectSpec
+    }
+
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    public getRootProject() {
+        return mProject
+    }
+
+    public void include(String... paths) {
+        for (String path : paths) {
+            if (!mProjectSpec.accept(path)) {
+                continue
+            }
+
+            def descendantPath = generateDescendantPath(path)
+            mSettings.include(descendantPath)
+
+            def descendantProjectDir = new File(mProject.projectDir, path.replace(':', '/'))
+            mSettings.project(descendantPath).projectDir = descendantProjectDir
+        }
+    }
+
+    public project(String path) {
+        return mSettings.project(generateChildPath(path))
+    }
+
+    private String generateDescendantPath(path) {
+        return "$mProject.path$path"
+    }
+}

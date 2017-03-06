@@ -1,0 +1,91 @@
+// -------------------------------------------------------------------------------------------------
+// Basic
+// -------------------------------------------------------------------------------------------------
+
+subprojects {
+    group 'com.xujiaao.gradle.composite'
+
+    /**
+     * Organizing evaluation dependencies.
+     */
+    if (parent != rootProject) {
+        evaluationDependsOn(parent.path)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Substitution
+// -------------------------------------------------------------------------------------------------
+
+rootProject.ext.substitutionRules = new SubstitutionRules(rootProject)
+
+subprojects {
+    final substitutionRules = rootProject.ext.substitutionRules
+    configurations.all { configuration ->
+        resolutionStrategy.dependencySubstitution.all { DependencySubstitution substitution ->
+            final ComponentSelector requested = substitution.requested
+            if (requested instanceof ModuleComponentSelector) {
+                final Project target = substitutionRules.find(requested.group, requested.module)
+                if (target) {
+                    println "Substitute: $project.name:$configuration.name '$requested' -> $target"
+
+                    project.evaluationDependsOn("$target.path")
+                    substitution.useTarget(target)
+                }
+            }
+        }
+    }
+}
+
+class SubstitutionRules {
+    private mProject
+    private Map<String, Map<String, Project>> mRules
+
+    SubstitutionRules(project) {
+        mProject = project
+    }
+
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    private Project find(group, module) {
+        initialize()
+
+        def groupProjects = mRules.get(group)
+        if (groupProjects) {
+            return groupProjects.get(module)
+        }
+
+        return null
+    }
+
+    private void initialize() {
+        if (!mRules) {
+            mRules = [:]
+            mProject.subprojects.each {
+                def groupRules = mRules.get(it.group)
+                if (!groupRules) {
+                    groupRules = [:]
+                    mRules.put(it.group, groupRules)
+                }
+
+                groupRules.put(it.name, it)
+            }
+
+            println 'Substitution rules initialized...'
+            mRules.each { group, groupRules ->
+                println "$group:"
+
+                groupRules.each { name, project ->
+                    println "  $name -> $project"
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Tasks
+// -------------------------------------------------------------------------------------------------
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

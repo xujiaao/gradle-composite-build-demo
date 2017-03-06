@@ -1,0 +1,61 @@
+import java.text.SimpleDateFormat
+
+buildscript {
+    dependencies {
+        classpath dep.androidPlugin
+    }
+}
+
+apply plugin: 'com.android.application'
+
+// -------------------------------------------------------------------------------------------------
+// Android
+// -------------------------------------------------------------------------------------------------
+
+android {
+    compileSdkVersion androidCompileSdkVersion
+    buildToolsVersion androidBuildToolsVersion
+
+    defaultConfig {
+        applicationId 'com.xujiaao.gradle.composite.lib1.sample'
+        versionCode 1
+        versionName "1.0.${new SimpleDateFormat("yyMMddHHmm").format(new Date())}"
+
+        minSdkVersion androidMinSdkVersion
+        targetSdkVersion androidTargetSdkVersion
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility androidSourceCompatibilityVersion
+        targetCompatibility androidTargetCompatibilityVersion
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Dependencies
+// -------------------------------------------------------------------------------------------------
+
+dependencies {
+
+    /**
+     * Jars.
+     */
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+
+    /**
+     * Support Libraries.
+     */
+    compile dep.appcompatV7
+
+    /**
+     * Projects.
+     */
+    compile wrapProject(':lib1')
+}
