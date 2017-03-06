@@ -36,8 +36,9 @@ Just send mock Setting object to the sub `settings.gradle` scripts.
 ````
 def includeProject(String path, Closure closure) {
     ...
+    
     apply {
-        from settingsFile
+        from ...
         to new SettingsProxy(...)
     }
 }
@@ -45,21 +46,13 @@ def includeProject(String path, Closure closure) {
 class SettingsProxy {
     ...
     
-    public getRootProject() {
-        ...
-    }
+    public getRootProject() { ... }
 
-    public void include(String... paths) {
-        ...
-    }
+    public void include(String... paths) { ... }
 
-    public project(String path) {
-        ...
-    }
+    public project(String path) { ... }
 
-    private String generateDescendantPath(path) {
-        ...
-    }
+    private String generateDescendantPath(path) { ... }
 }
 ````
 
